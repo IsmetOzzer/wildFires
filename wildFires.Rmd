@@ -1,0 +1,51 @@
+---
+title: "wildFires"
+author: "IO"
+date: "18 02 2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(leaflet)
+library(dplyr)
+```
+
+## R Markdown
+
+files <- list.files(pattern ="states_.*csv") #states_1(2,3,4) diye giden tüm dosyaları files altında topla
+df_list <- lapply(files, read_csv)                 #tüm csv dosyalarını oku ve df_list dataframe'ine ekle
+us_census <- bind_rows(df_list)                #tüm dosyaların rowlarını yan yana ekleyip us_census'u oluştur
+
+## Read the files
+
+```{r files}
+files <- list.files(pattern = "modis_.*csv", recursive = T)
+fires_list <- lapply(files, read.csv)
+fires <- bind_rows(fires_list)
+```
+
+```{r data}
+fires$acq_date <- lubridate::as_datetime(fires$acq_date)
+fires_2001 <- fires %>% filter(acq_date < "2001-01-01")
+```
+
+
+## Leaflet
+
+```{r}
+leaflet(data = fires_2001) %>% 
+  setView(lat = fires$latitude, lng = fires$longitude, zoom = 3) %>% 
+  addTiles() %>% 
+  addMarkers(~fires$latitude, ~fires$longitude, 
+             popup = ~fires$acq_date, 
+             label = ~fires$acq_date) %>%
+  addProviderTiles(providers$OpenStreetMap)
+```
+
+
+
+
+
+
+
